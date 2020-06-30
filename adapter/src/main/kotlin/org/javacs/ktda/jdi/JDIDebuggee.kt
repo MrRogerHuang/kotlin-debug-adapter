@@ -104,14 +104,15 @@ class JDIDebuggee(
 					.apply { addClassFilter(className + "$*") } // For local types
 					.enable()
 				
-				eventBus.subscribe(ClassPrepareEvent::class) {
-					setBreakpointAtType(it.jdiEvent.referenceType(), lineNumber)
-				}
-				
 				// Try setting breakpoint using loaded VM classes
 				
 				vm.classesByName(className).forEach {
-					setBreakpointAtType(it, lineNumber)
+					val success = setBreakpointAtType(it, lineNumber)
+					if (!success) {
+						eventBus.subscribe(ClassPrepareEvent::class) {
+							setBreakpointAtType(it.jdiEvent.referenceType(), lineNumber)
+						}
+					}
 				}
 			}
 	}
